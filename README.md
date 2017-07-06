@@ -4,6 +4,8 @@ Low level Multicast DNS implementation in pure javascript.
 
 Based on [multicast-dns](https://github.com/mafintosh/multicast-dns) by Mathias Buus.
 
+Can be configured to work with a single network interface or multiple network interfaces. When no interface is specified the OS package is used to detect all available interfaces.
+
 ```
 npm install mdns-server
 ```
@@ -12,8 +14,8 @@ npm install mdns-server
 
 ``` js
 var mdns = require('mdns-server')({
-  reuseAddr: true, // reuse address in case other mdns service is running
-  loopback: true,  // allow our own mdns messages to be received
+  reuseAddr: true, // in case other mdns service is running
+  loopback: true,  // receive our own mdns messages
   noInit: true     // do not initialize on creation
 })
 
@@ -46,7 +48,7 @@ mdns.on('destroyed', function () {
   process.exit(0)
 })
 
-// when the server is ready lets query for an A record for 'foo.local'
+// query for 'foo.local' A record when the server is ready
 mdns.on('ready', function () {
   mdns.query({
     questions:[{
@@ -63,7 +65,11 @@ mdns.initServer()
 setTimeout(function () { mdns.destroy() }, 10000)
 ```
 
-A query will be sent on all available IPv4 and IPv6 interfaces. You should see those queries, i.e.
+### query packets
+
+In this example a query will be sent on all available IPv4
+and IPv6 interfaces. With loopback enabled these queries
+should be recorded by the server. I.E.
 
 ``` text
 got a query packet:
@@ -72,10 +78,14 @@ got a query packet:
 [ { name: 'foo.local', type: 'A', class: 1 } ]
 ```
 
-Here there were two query packets because the system has both an IPv4 and IPv6 address on one interface.
+Here there were two query packets because the system has
+both an IPv4 and IPv6 address on one interface.
 
+### response packets
 
-Assuming you have a device on the local network that matches the name foo.local you should see a response similar to the following...
+Assuming a device on the local network matches the query
+request for 'foo.local' the server should record a
+response similar to the following...
 
 ``` text
 got a response packet:
@@ -115,7 +125,7 @@ A packet has the following format
 
 Currently data from `SRV`, `A`, `PTR`, `TXT`, `AAAA` and `HINFO` records is passed
 
-## `mdns = mdns-server([options])`
+### `mdns = mdns-server([options])`
 
 Creates a new `mdns` instance. Options can contain the following
 
@@ -129,18 +139,24 @@ Creates a new `mdns` instance. Options can contain the following
 }
 ```
 
-### reuseAddr
+#### reuseAddr
 
-Determines if socket will be allowed to reuse an address already in use. (requires node >=0.11.13)
-This is helpful if another process is also listening for mDNS packets.
+Determines if socket will be allowed to reuse an address
+already in use. (requires node >=0.11.13) This is helpful
+if another process is also listening for mDNS packets.
 
-### interfaces
+#### interfaces
 
-Specify the interface or interfaces to be used on the mDNS server. If no interfaces are specified then all available network interfaces will be used. To select a single interface set interfaces to the ip address of the selected interface. To select multiple interfaces use an array of ip addresses.
+Specify the interface or interfaces to be used on the
+mDNS server. If no interfaces are specified then all
+available network interfaces will be used. To select a
+single interface set interfaces to the ip address of
+the selected interface. To select multiple interfaces
+use an array of ip addresses.
 
 For backward compatability with [multicast-dns](https://github.com/mafintosh/multicast-dns) *interface* may be used in place of *interfaces*.
 
-#### single interface
+##### single interface
 
 ``` js
 var mdns = require('mdns-server')({
@@ -148,7 +164,7 @@ var mdns = require('mdns-server')({
 })
 ```
 
-#### multiple interfaces
+##### multiple interfaces
 
 ``` js
 var mdns = require('mdns-server')({
@@ -156,17 +172,21 @@ var mdns = require('mdns-server')({
 })
 ```
 
-### ttl
+#### ttl
 
 Set the multicast ttl.
 
-### loopback
+#### loopback
 
-Set whether server will report on mDNS packets originating from the same machine.
+Set whether server will report on mDNS packets
+originating from the same machine.
 
-### noInit
+#### noInit
 
-Control automatic server initialization. If set to false then server will not automatically initialize and the initServer() method must be called when your application is ready.
+Control automatic server initialization. If set to
+false then server will not automatically initialize
+and the initServer() method must be called when
+your application is ready.
 
 
 ## Events
