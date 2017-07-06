@@ -1,0 +1,18 @@
+{
+  "name": "mdns-js",
+  "version": "1.0.0",
+  "description": "Low level multicast-dns implementation in pure javascript.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bnielsen1965/mdns-server.git"
+  },
+  "author": "Bryan Nielsen (@bnielsen1965)",
+  "license": "MIT",
+  "dependencies": {
+    "dns-packet": "^1.1.1"
+  }
+}
