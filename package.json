@@ -1,6 +1,6 @@
 {
   "name": "mdns-server",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Low level Multicast DNS implementation in pure javascript.",
   "main": "index.js",
   "scripts": {
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/bnielsen1965/mdns-server.git"
+    "url": "git+https://github.com/bnielsen1965/mdns-server.git"
   },
   "author": "Bryan Nielsen (@bnielsen1965)",
   "license": "MIT",

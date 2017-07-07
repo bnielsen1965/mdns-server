@@ -16,10 +16,10 @@ module.exports = function (options) {
   var emitter = new events.EventEmitter();
   var mDNS = {
     config: {
-      reuseAddr: options.reuseAddr ? true : false,
+      reuseAddr: typeof options.reuseAddr === 'undefined' ? true : options.reuseAddr,
       interfaces: options.interfaces || options.interface || null,
       ttl: options.ttl || 255,
-      loopback: options.loopback ? true : false,
+      loopback: typeof options.loopback === 'undefined' ? true : options.loopback,
       noInit: options.noInit ? true : false
     },
     destroyed: false,

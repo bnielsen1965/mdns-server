@@ -131,10 +131,10 @@ Creates a new `mdns` instance. Options can contain the following
 
 ``` js
 {
-  reuseAddr: (false) || Boolean,
+  reuseAddr: (true) || Boolean,
   interfaces: (null) || String || [String, String, ...],
   ttl: (255) || Integer,
-  loopback: (false) || Boolean,
+  loopback: (true) || Boolean,
   noInit: (false) || Boolean
 }
 ```
@@ -267,7 +267,9 @@ Destroy the mdns instance. Closes the udp socket.
 
 ### `mdns.initServer()`
 
-Initialize the server. Only call this method if the constructor was called with the option noInit: true. This is used if your application needs some time to setup events before the server initialization.
+Initialize the server. Only call this method if the constructor
+was called with the option noInit: true. This is used if your
+application needs some time to setup events before the server initialization.
 
 
 ## License
