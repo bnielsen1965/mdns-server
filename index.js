@@ -63,7 +63,7 @@ module.exports = function (options) {
           }
           else {
             // process this interface
-            mDNS.createNewSocket(mDNS.interfaces[i])
+            mDNS.createNewSockets(mDNS.interfaces[i])
             .then((listening) => {
               if (listening) {
                 mDNS.interfaces[i].listening = true;
@@ -79,21 +79,39 @@ module.exports = function (options) {
     },
 
     // create new socket for an interface
-    createNewSocket: function (iface) {
+    createNewSockets: function (iface) {
       return new Promise((resolve, reject) => {
-        iface.socket = dgram.createSocket({
+        mDNS.createSendSocket(iface)
+        .then(function () {
+          return mDNS.createReceiveSocket(iface);
+        })
+        .then(function () {
+          resolve(true);
+        })
+        .catch(function (err) {
+          iface.socketRecv = null;
+          iface.socketSend = null;
+          // socket failure, continue to next interface
+          resolve(false);
+        });
+      });
+    },
+
+    createReceiveSocket: function (iface) {
+      return new Promise((resolve, reject) => {
+        iface.socketRecv = dgram.createSocket({
           type: (iface.family === 'IPv4' ? 'udp4' : 'udp6'),
           reuseAddr: mDNS.config.reuseAddr
         })
         .once('error', (err) => {
-          // resolve so we'll move to next interface
-          resolve();
+          emitter.emit('error', err);
+          reject();
         })
         .on('error', mDNS.socketError)
         .on('listening', () => {
-          iface.socket.setMulticastTTL(mDNS.config.ttl);
-          iface.socket.setMulticastLoopback(mDNS.config.loopback);
-          resolve(true);
+          iface.socketRecv.setMulticastTTL(mDNS.config.ttl);
+          iface.socketRecv.setMulticastLoopback(mDNS.config.loopback);
+          resolve();
         })
         .on('message', (msg, rinfo) => {
           // include interface name so we know where the message came in
@@ -101,6 +119,31 @@ module.exports = function (options) {
           mDNS.socketOnMessage(msg, rinfo);
         })
         .bind(MDNS_PORT, (iface.family === 'IPv4' ? MDNS_IPV4 : MDNS_IPV6 + '%' + iface.name));
+      });
+    },
+
+    createSendSocket: function (iface) {
+      return new Promise((resolve, reject) => {
+        iface.socketSend = dgram.createSocket({
+          type: (iface.family === 'IPv4' ? 'udp4' : 'udp6'),
+          reuseAddr: mDNS.config.reuseAddr
+        })
+        .once('error', (err) => {
+          emitter.emit('error', err);
+          reject();
+        })
+        .on('error', mDNS.socketError)
+        .on('listening', () => {
+          iface.socketSend.setMulticastTTL(mDNS.config.ttl);
+          iface.socketSend.setMulticastLoopback(mDNS.config.loopback);
+          resolve();
+        })
+        .on('message', (msg, rinfo) => {
+          // include interface name so we know where the message came in
+          rinfo.interface = iface.name;
+          mDNS.socketOnMessage(msg, rinfo);
+        })
+        .bind(MDNS_PORT, iface.address + (iface.family === 'IPv4' ? '' : '%' + iface.name));
       });
     },
 
@@ -235,8 +278,8 @@ module.exports = function (options) {
         if (ii >= interfaces.length) {
           return cb();
         }
-        else {
-          interfaces[ii].socket.send(
+        else if (interfaces[ii].socketSend) {
+          interfaces[ii].socketSend.send(
             message,
             0,
             message.length,
@@ -246,6 +289,10 @@ module.exports = function (options) {
               processInterface(ii + 1);
             }
           );
+        }
+        else {
+          // interface did not have socket
+          processInterface(ii + 1);
         }
       };
       processInterface(0);
@@ -301,7 +348,12 @@ module.exports = function (options) {
           cb();
         }
         else {
-          mDNS.interfaces[i].socket.close();
+          if (mDNS.interfaces[i].socketSend) {
+            mDNS.interfaces[i].socketSend.close();
+          }
+          if (mDNS.interfaces[i].socketRecv) {
+            mDNS.interfaces[i].socketRecv.close();
+          }
           processInterface(i + 1);
         }
       };
