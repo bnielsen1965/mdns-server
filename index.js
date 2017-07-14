@@ -111,6 +111,7 @@ module.exports = function (options) {
         .on('listening', () => {
           iface.socketRecv.setMulticastTTL(mDNS.config.ttl);
           iface.socketRecv.setMulticastLoopback(mDNS.config.loopback);
+          iface.socketRecv.addMembership((iface.family === 'IPv4' ? MDNS_IPV4 : MDNS_IPV6 + '%' + iface.name), iface.address);
           resolve();
         })
         .on('message', (msg, rinfo) => {
@@ -118,7 +119,7 @@ module.exports = function (options) {
           rinfo.interface = iface.name;
           mDNS.socketOnMessage(msg, rinfo);
         })
-        .bind(MDNS_PORT, (iface.family === 'IPv4' ? MDNS_IPV4 : MDNS_IPV6 + '%' + iface.name));
+        .bind(MDNS_PORT, iface.address + (iface.family === 'IPv4' ? '' : '%' + iface.name));
       });
     },
 
@@ -134,8 +135,6 @@ module.exports = function (options) {
         })
         .on('error', mDNS.socketError)
         .on('listening', () => {
-          iface.socketSend.setMulticastTTL(mDNS.config.ttl);
-          iface.socketSend.setMulticastLoopback(mDNS.config.loopback);
           resolve();
         })
         .on('message', (msg, rinfo) => {
@@ -143,7 +142,7 @@ module.exports = function (options) {
           rinfo.interface = iface.name;
           mDNS.socketOnMessage(msg, rinfo);
         })
-        .bind(MDNS_PORT, iface.address + (iface.family === 'IPv4' ? '' : '%' + iface.name));
+        .bind(0, iface.address + (iface.family === 'IPv4' ? '' : '%' + iface.name));
       });
     },
 
