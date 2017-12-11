@@ -197,8 +197,12 @@ module.exports = function (options) {
         }
         names.push(iface);
         osInterfaces[iface].forEach(function (assignment) {
-          if (assignment.internal || (assignment.family !== 'IPv4' && assignment.family !== 'IPv6')) {
-            // unsupported family or is internal interface
+          if (
+            assignment.internal ||
+            (assignment.family !== 'IPv4' && assignment.family !== 'IPv6') ||
+            /^(2002|2001)::/ig.exec(assignment.address)
+          ) {
+            // unsupported family, internal interface, or special IPv6 prefix
             return;
           }
           interfaces.push({ name: iface, address: assignment.address, family: assignment.family });
