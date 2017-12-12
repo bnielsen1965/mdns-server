@@ -200,7 +200,7 @@ module.exports = function (options) {
           if (
             assignment.internal ||
             (assignment.family !== 'IPv4' && assignment.family !== 'IPv6') ||
-            /^(2002|2001)::/ig.exec(assignment.address)
+            /^(2002|2001):/ig.exec(assignment.address)
           ) {
             // unsupported family, internal interface, or special IPv6 prefix
             return;
