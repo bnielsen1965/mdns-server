@@ -119,7 +119,7 @@ module.exports = function (options) {
           rinfo.interface = iface.name;
           mDNS.socketOnMessage(msg, rinfo);
         })
-        .bind(MDNS_PORT, iface.address + (iface.family === 'IPv4' ? '' : '%' + iface.name));
+        .bind(MDNS_PORT, iface.family === 'IPv4' ? '0.0.0.0' : `::%${iface.name}`);
       });
     },
 
