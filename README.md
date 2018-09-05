@@ -1,6 +1,6 @@
 # mdns-server
 
-Low level Multicast DNS implementation in pure javascript.
+Low level Multicast DNS implementation in pure javascript. This is a fork of [Bryan Nielsen's](@bnielsen1965) version, with a small bug fix.
 
 Based on [multicast-dns](https://github.com/mafintosh/multicast-dns) by Mathias Buus.
 
