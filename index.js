@@ -144,8 +144,18 @@ module.exports = function (options) {
           iface.bindStatus.listening = true;
           iface.socketRecv.setMulticastTTL(mDNS.config.ttl);
           iface.socketRecv.setMulticastLoopback(mDNS.config.loopback);
-          iface.socketRecv.addMembership((iface.family === 'IPv4' ? MDNS_IPV4 : MDNS_IPV6 + '%' + iface.name), iface.address);
-          resolve(true);
+          try {
+            iface.socketRecv.addMembership(
+              (iface.family === 'IPv4' ? MDNS_IPV4 : MDNS_IPV6),
+              iface.bindStatus.address + (iface.family === 'IPv4' ? '' : '%' + iface.name)
+            );
+            resolve(true);
+          }
+          catch(e) {
+            iface.socketRecv.close();
+            iface.bindStatus.listening = false;
+            resolve(false);
+          }
         })
         .on('message', (msg, rinfo) => {
           // include interface name so we know where the message came in
@@ -154,11 +164,12 @@ module.exports = function (options) {
         });
 
         if (iface.bindStatus.catchAll) {
-          iface.socketRecv.bind(MDNS_PORT, iface.family === 'IPv4' ? '0.0.0.0' : `::%${iface.name}`);
+          iface.bindStatus.address = iface.family === 'IPv4' ? '0.0.0.0' : '::';
         }
         else {
-          iface.socketRecv.bind(MDNS_PORT, iface.address + (iface.family === 'IPv4' ? '' : '%' + iface.name));
+          iface.bindStatus.address = iface.address;
         }
+        iface.socketRecv.bind(MDNS_PORT, iface.bindStatus.address + (iface.family === 'IPv4' ? '' : '%' + iface.name));
       });
     },
 
