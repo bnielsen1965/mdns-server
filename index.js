@@ -99,27 +99,66 @@ module.exports = function (options) {
 
     createReceiveSocket: function (iface) {
       return new Promise((resolve, reject) => {
+        iface.bindStatus = {
+          listening: false,
+          catchAll: false
+        };
+
+        mDNS.getReceiveSocket(iface)
+        .then(success => {
+          if (!success) {
+            // try again with catch-all address
+            iface.bindStatus.catchAll = true;
+          }
+          return success || mDNS.getReceiveSocket(iface);
+        })
+        .then(success => {
+          if (!success) {
+            reject();
+          }
+          else {
+            resolve();
+          }
+        })
+        .catch(err => { reject(err); });
+      });
+    },
+
+    // get a receive socket for the given interface
+    getReceiveSocket: function (iface) {
+      return new Promise((resolve, reject) => {
         iface.socketRecv = dgram.createSocket({
           type: (iface.family === 'IPv4' ? 'udp4' : 'udp6'),
           reuseAddr: mDNS.config.reuseAddr
         })
-        .once('error', (err) => {
-          emitter.emit('error', err);
-          reject();
+        .on('error', (err) => {
+          if (iface.bindStatus.listening) {
+            mDNS.socketError(err);
+          }
+          else {
+            iface.socketRecv.close();
+            resolve(false);
+          }
         })
-        .on('error', mDNS.socketError)
         .on('listening', () => {
+          iface.bindStatus.listening = true;
           iface.socketRecv.setMulticastTTL(mDNS.config.ttl);
           iface.socketRecv.setMulticastLoopback(mDNS.config.loopback);
           iface.socketRecv.addMembership((iface.family === 'IPv4' ? MDNS_IPV4 : MDNS_IPV6 + '%' + iface.name), iface.address);
-          resolve();
+          resolve(true);
         })
         .on('message', (msg, rinfo) => {
           // include interface name so we know where the message came in
           rinfo.interface = iface.name;
           mDNS.socketOnMessage(msg, rinfo);
-        })
-        .bind(MDNS_PORT, iface.address + (iface.family === 'IPv4' ? '' : '%' + iface.name));
+        });
+
+        if (iface.bindStatus.catchAll) {
+          iface.socketRecv.bind(MDNS_PORT, iface.family === 'IPv4' ? '0.0.0.0' : `::%${iface.name}`);
+        }
+        else {
+          iface.socketRecv.bind(MDNS_PORT, iface.address + (iface.family === 'IPv4' ? '' : '%' + iface.name));
+        }
       });
     },
 
