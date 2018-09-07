@@ -48,12 +48,12 @@ mdns.on('destroyed', function () {
   process.exit(0)
 })
 
-// query for 'foo.local' A record when the server is ready
+// query for all services on networks
 mdns.on('ready', function () {
   mdns.query({
     questions:[{
-      name: 'foo.local',
-      type: 'A'
+      name: '_services._dns-sd._udp.local',
+      type: 'PTR'
     }]
   })
 })
