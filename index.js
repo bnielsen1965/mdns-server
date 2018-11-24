@@ -337,7 +337,7 @@ module.exports = function (options) {
             0,
             message.length,
             MDNS_PORT,
-            (interfaces[ii].family === 'IPv4' ? MDNS_IPV4 : MDNS_IPV6),
+            (interfaces[ii].family === 'IPv4' ? MDNS_IPV4 : MDNS_IPV6 + '%' + interfaces[ii].name),
             function () {
               processInterface(ii + 1);
             }
