@@ -179,11 +179,13 @@ module.exports = function (options) {
           type: (iface.family === 'IPv4' ? 'udp4' : 'udp6'),
           reuseAddr: mDNS.config.reuseAddr
         })
-        .once('error', (err) => {
-          emitter.emit('error', err);
-          reject();
+        .on('error', (err) => {
+          if (err.code === 'EADDRNOTAVAIL') {
+            reject();
+          } else {
+            mDNS.socketError(err);
+          }
         })
-        .on('error', mDNS.socketError)
         .on('listening', () => {
           resolve();
         })
