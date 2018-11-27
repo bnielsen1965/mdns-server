@@ -328,7 +328,7 @@ module.exports = function (options) {
       // send message on each interface
       var message = packet.encode(value);
       var processInterface = function (ii) {
-        if (ii >= interfaces.length) {
+        if (ii >= interfaces.length || mDNS.destroyed) {
           return cb();
         }
         else if (interfaces[ii].socketSend) {
@@ -394,7 +394,7 @@ module.exports = function (options) {
       if (mDNS.destroyed) {
         return process.nextTick(cb);
       }
-      destroyed = true;
+      mDNS.destroyed = true;
       var processInterface = function (i) {
         if (i >= mDNS.interfaces.length) {
           emitter.emit('destroyed');
