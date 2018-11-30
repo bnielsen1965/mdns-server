@@ -272,6 +272,61 @@ was called with the option noInit: true. This is used if your
 application needs some time to setup events before the server initialization.
 
 
+## Error Handling
+
+Once an mdns-server instance is created it will attempt to emit all errors as an
+*'error'* event type. Unhandled error events may cause an application to crash so
+it is recommended to add an error listener to any mdns-server instances.
+
+I.E.
+```javascript
+var mdns = require('mdns-server')({
+  reuseAddr: true, // in case other mdns service is running
+  loopback: true,  // receive our own mdns messages
+  noInit: true     // do not initialize on creation
+})
+
+// listen for errors
+mdns.on('error', function (error) {
+  // do something here to handle the error if necessary
+  console.log('mDNS Server Error', error.message);
+})
+
+// initialize the server now that we are watching for events
+mdns.initServer()
+
+```
+
+When using the auto server initialization by not specifying the *noInit: true*
+option it is possible for an error to occur before your error listener is ready.
+In this case a try {} catch {} may be needed when creating the server instance...
+
+```javascript
+var mdns;
+try {
+  // create a server instance that auto initializes
+  mdns = require('mdns-server')({
+    reuseAddr: true, // in case other mdns service is running
+    loopback: true,  // receive our own mdns messages
+  })
+}
+catch (error) {
+  // do something here to handle the caught initialization error
+  console.log('mDNS Server Init Error', error.message);
+}
+
+// listen for errors
+mdns.on('error', function (error) {
+  // do something here to handle the error if necessary
+  console.log('mDNS Server Error', error.message);
+})
+
+```
+
+
+
+
+
 ## License
 
 MIT
