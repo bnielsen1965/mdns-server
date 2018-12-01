@@ -162,7 +162,7 @@ module.exports = function (options) {
         if (iface.bindStatus.catchAll) {
           iface.bindStatus.address = iface.family === 'IPv4' ? '0.0.0.0' : '::';
         } else {
-          iface.bindStatus.address = iface.address;
+          iface.bindStatus.address = (iface.family === 'IPv4' ? MDNS_IPV4 : MDNS_IPV6);
         }
         iface.socketRecv.bind(MDNS_PORT, iface.bindStatus.address + (iface.family === 'IPv4' ? '' : '%' + iface.name));
       });
