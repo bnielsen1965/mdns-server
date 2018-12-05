@@ -192,7 +192,6 @@ module.exports = function (options) {
 
     // process socket error
     socketError: function (err) {
-      console.log('SOCKET ERROR', err.message);
       if (err.code === 'EACCES' || err.code === 'EADDRINUSE' || err.code === 'EADDRNOTAVAIL') {
         emitter.emit('error', err);
       } else {
