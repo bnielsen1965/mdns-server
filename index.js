@@ -21,7 +21,8 @@ module.exports = function (options) {
       interfaces: options.interfaces || options.interface || null,
       ttl: options.ttl || 255,
       loopback: typeof options.loopback === 'undefined' ? true : options.loopback,
-      noInit: !!options.noInit
+      noInit: !!options.noInit,
+      srcPort: options.srcPort || 0
     },
     destroyed: false,
     interfaces: [],
@@ -179,6 +180,7 @@ module.exports = function (options) {
           })
           .on('error', mDNS.socketError)
           .on('listening', () => {
+            iface.socketSend.setMulticastTTL(mDNS.config.ttl);
             resolve();
           })
           .on('message', (msg, rinfo) => {
@@ -186,7 +188,7 @@ module.exports = function (options) {
             rinfo.interface = iface.name;
             mDNS.socketOnMessage(msg, rinfo);
           })
-          .bind(0, iface.address + (iface.family === 'IPv4' ? '' : '%' + iface.name));
+          .bind(mDNS.config.srcPort, iface.address + (iface.family === 'IPv4' ? '' : '%' + iface.name));
       });
     },
 
