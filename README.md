@@ -181,6 +181,11 @@ Set the multicast ttl.
 Set whether server will report on mDNS packets
 originating from the same machine.
 
+#### srcPort
+
+Set the bind port for the send socket. Default will 
+select the first available high level socket.
+
 #### noInit
 
 Control automatic server initialization. If set to
