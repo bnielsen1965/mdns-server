@@ -1,6 +1,6 @@
 {
   "name": "mdns-server",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "Low level Multicast DNS implementation in pure javascript.",
   "main": "index.js",
   "scripts": {
@@ -15,7 +15,7 @@
   "author": "Bryan Nielsen (@bnielsen1965)",
   "license": "MIT",
   "dependencies": {
-    "dns-packet": "^1.1.1"
+    "dns-packet": "^5.2.2"
   },
   "devDependencies": {
     "chai": "^4.1.2",
