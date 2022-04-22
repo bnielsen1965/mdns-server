@@ -12,6 +12,11 @@ const ErrorMessages = {
   NO_INTERFACES: 'No available interfaces.'
 };
 
+function familyIsIPV4(family) {
+  // string check for Node.js <= 17, number for >= 18
+  return family === 'IPv4' || family === 4;
+}
+
 module.exports = function (options) {
   options = options || {};
   var emitter = new events.EventEmitter();
@@ -125,9 +130,10 @@ module.exports = function (options) {
 
     // get a receive socket for the given interface
     getReceiveSocket: function (iface) {
+      const isIPV4 = familyIsIPV4(iface.family);
       return new Promise((resolve, reject) => {
         iface.socketRecv = dgram.createSocket({
-          type: (iface.family === 'IPv4' ? 'udp4' : 'udp6'),
+          type: (isIPV4 ? 'udp4' : 'udp6'),
           reuseAddr: mDNS.config.reuseAddr
         })
           .on('error', (err) => {
@@ -144,8 +150,8 @@ module.exports = function (options) {
             iface.socketRecv.setMulticastLoopback(mDNS.config.loopback);
             try {
               iface.socketRecv.addMembership(
-                (iface.family === 'IPv4' ? MDNS_IPV4 : MDNS_IPV6),
-                iface.bindStatus.address + (iface.family === 'IPv4' ? '' : '%' + iface.name)
+                (isIPV4 ? MDNS_IPV4 : MDNS_IPV6),
+                iface.bindStatus.address + (isIPV4 ? '' : '%' + iface.name)
               );
               resolve(true);
             } catch (e) {
@@ -161,18 +167,19 @@ module.exports = function (options) {
           });
 
         if (iface.bindStatus.catchAll) {
-          iface.bindStatus.address = iface.family === 'IPv4' ? '0.0.0.0' : '::';
+          iface.bindStatus.address = isIPV4 ? '0.0.0.0' : '::';
         } else {
-          iface.bindStatus.address = (iface.family === 'IPv4' ? MDNS_IPV4 : MDNS_IPV6);
+          iface.bindStatus.address = (isIPV4 ? MDNS_IPV4 : MDNS_IPV6);
         }
-        iface.socketRecv.bind(MDNS_PORT, iface.bindStatus.address + (iface.family === 'IPv4' ? '' : '%' + iface.name));
+        iface.socketRecv.bind(MDNS_PORT, iface.bindStatus.address + (isIPV4 ? '' : '%' + iface.name));
       });
     },
 
     createSendSocket: function (iface) {
+      const isIPV4 = familyIsIPV4(iface.family);
       return new Promise((resolve, reject) => {
         iface.socketSend = dgram.createSocket({
-          type: (iface.family === 'IPv4' ? 'udp4' : 'udp6'),
+          type: (isIPV4 ? 'udp4' : 'udp6'),
           reuseAddr: mDNS.config.reuseAddr
         })
           .once('error', (err) => {
@@ -188,7 +195,7 @@ module.exports = function (options) {
             rinfo.interface = iface.name;
             mDNS.socketOnMessage(msg, rinfo);
           })
-          .bind(mDNS.config.srcPort, iface.address + (iface.family === 'IPv4' ? '' : '%' + iface.name));
+          .bind(mDNS.config.srcPort, iface.address + (isIPV4 ? '' : '%' + iface.name));
       });
     },
 
@@ -244,7 +251,7 @@ module.exports = function (options) {
         osInterfaces[iface].forEach(function (assignment) {
           if (
             assignment.internal ||
-            (assignment.family !== 'IPv4' && assignment.family !== 'IPv6') ||
+            (assignment.family !== 'IPv4' && assignment.family !== 4 && assignment.family !== 'IPv6' && assignment.family !== 6) ||
             /^(2002|2001):/ig.exec(assignment.address)
           ) {
             // unsupported family, internal interface, or special IPv6 prefix
@@ -330,7 +337,7 @@ module.exports = function (options) {
             0,
             message.length,
             MDNS_PORT,
-            (interfaces[ii].family === 'IPv4' ? MDNS_IPV4 : MDNS_IPV6 + '%' + interfaces[ii].name),
+            (familyIsIPV4(interfaces[ii].family) ? MDNS_IPV4 : MDNS_IPV6 + '%' + interfaces[ii].name),
             function () {
               processInterface(ii + 1);
             }
